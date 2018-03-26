@@ -10,7 +10,6 @@ from collections import deque
 import csv
 import datetime as dt
 import dash_table_experiments as dt1
-import pandas as pd
 
 app_colors = {
     'background': '#0C0F0A',
