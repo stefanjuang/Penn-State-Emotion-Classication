@@ -1,10 +1,7 @@
 import dash
-from dash.dependencies import Output, Event, Input, State
+from dash.dependencies import Output, Event, Input
 import dash_core_components as dcc
 import dash_html_components as html
-import plotly
-import plotly.plotly as py
-import random
 import plotly.graph_objs as go
 from collections import deque
 import csv
@@ -42,18 +39,31 @@ keyword=[]
 score=[]
 emotion=[]
 tweet=[]
+tweet.append(0)
 count = 0
 
-with open('output.csv', newline='') as csvfile:
-    reader = csv.DictReader(csvfile)
-    for row in reader:
-        Xi.append(dt.datetime.strptime(row['Timestamp'], '%Y-%m-%d %H:%M:%S'))
-        emotion.append(row['Emotion'])
-        score.append(row['Score'])
-        keyword.append(row['Keyword'])
-        tweet.append(row['Tweet'])
-        
+with open('demo.csv', 'w') as outcsv:
+    writer = csv.writer(outcsv)
+    writer.writerow(["ID", "Keyword", "Timestamp", "Emotion", "Score", "Tweet"])
 
+    with open('output.csv', 'r') as incsv:
+        reader = csv.reader(incsv)
+        writer.writerows(row + [0.0] for row in reader)
+outcsv.closed
+with open('demo.csv', newline='') as csvfile:
+    reader1 = csv.DictReader(csvfile)
+    sortedlist = sorted(reader1, key=lambda row: row['Timestamp'], reverse=False)
+    for row in sortedlist:
+        if row['Tweet'] == tweet[-1]:
+            pass
+        else:
+            Xi.append(dt.datetime.strptime(row['Timestamp'], '%Y-%m-%d %H:%M:%S'))
+            emotion.append(row['Emotion'])
+            score.append(row['Score'])
+            keyword.append(row['Keyword'])
+            tweet.append(row['Tweet'])
+csvfile.closed    
+tweet.remove(0)
 
 app = dash.Dash(__name__)
 app.layout = html.Div(
@@ -69,15 +79,15 @@ app.layout = html.Div(
         
         dcc.Interval(
             id='graph-update',
-            interval=1.5*1000
+            interval=4*1000
         ),
         dcc.Interval(
             id='table-update',
-            interval=1*1000
+            interval=4*1000
         ),
         dcc.Interval(
             id='donut-update',
-            interval=1.5*1000
+            interval=4*1000
         ),
             ], style={'backgroundColor': app_colors['background'], 'height':'2000px',},
 )
@@ -87,8 +97,8 @@ app.layout = html.Div(
               events=[Event('table-update', 'interval')])
 def update_table():
     trace = go.Table(
-    header=dict(values=['Time', 'Tweets']),
-    cells=dict(values=[Xi,tweet]))
+    header=dict(values=['Time', 'Emotion','Score', 'Tweets']),
+    cells=dict(values=[Xi[count-2:], emotion[count-2:], score[count-2:], tweet[count-2:]]))
     data1 = [trace] 
     return{'data':data1}
 
@@ -132,31 +142,31 @@ def update_graph_scatter():
             mode= 'lines+markers'
             )
     if emotion[count] == 'fear':
-        Y0.append(Y0[-1]*0.95+float(score[count])*0.05)
+        Y0.append(Y0[-1]*0.85+float(score[count])*0.15)
         Y1.append(Y1[-1]*0.95)
         Y2.append(Y2[-1]*0.95)
         Y3.append(Y3[-1]*0.95)
         Y4.append(Y4[-1]*0.95)
     elif emotion[count] == 'disgust':
-        Y1.append(Y1[-1]*0.95+float(score[count])*0.05)
+        Y1.append(Y1[-1]*0.85+float(score[count])*0.15)
         Y0.append(Y0[-1]*0.95)
         Y2.append(Y2[-1]*0.95)
         Y3.append(Y3[-1]*0.95)
         Y4.append(Y4[-1]*0.95)
     elif emotion[count] == 'sadness':
-        Y2.append(Y2[-1]*0.95+float(score[count])*0.05)
+        Y2.append(Y2[-1]*0.85+float(score[count])*0.15)
         Y1.append(Y1[-1]*0.95)
         Y0.append(Y0[-1]*0.95)
         Y3.append(Y3[-1]*0.95)
         Y4.append(Y4[-1]*0.95)
     elif emotion[count] == 'joy':
-        Y3.append(Y3[-1]*0.95+float(score[count])*0.05) 
+        Y3.append(Y3[-1]*0.85+float(score[count])*0.15) 
         Y1.append(Y1[-1]*0.95)
         Y2.append(Y2[-1]*0.95)
         Y0.append(Y0[-1]*0.95)
         Y4.append(Y4[-1]*0.95)
     elif emotion[count] == 'anger':
-        Y4.append(Y4[-1]*0.95+float(score[count])*0.05) 
+        Y4.append(Y4[-1]*0.85+float(score[count])*0.15) 
         Y1.append(Y1[-1]*0.95)
         Y2.append(Y2[-1]*0.95)
         Y3.append(Y3[-1]*0.95)
